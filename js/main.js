@@ -59,7 +59,7 @@ jQuery(function() {
   var boxGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
 
   // The surface colors
-  var boxColors = [0x257E78, 0x40B8AF, 0x6C2D58, 0xB2577A, 0xF6B17F, 0xFFFFFF];
+  var boxColors = [0x983265, 0x986598, 0x979735, 0x339798, 0x006699, 0xCCCC99];
 
   // Create an array of surface meshes of each color
   var boxMaterials = _.map(boxColors, function(color) {
