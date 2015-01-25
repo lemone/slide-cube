@@ -12,7 +12,7 @@ jQuery(function() {
 
 	// Number of box objects we want to have in our space cube
   // This should never excede 999. 800 is even a bit much. 
-  var numberOfBoxes = 8;
+  var numberOfBoxes = 128;
   // Length of one side of the cubes
   var cubeSize = 5;
   var boxes = [];
@@ -32,6 +32,11 @@ jQuery(function() {
     }
   }
 
+  // Find the center point of the spaceCube
+  var actualDimensionMidPoint = ((spaceBoxDimension * cubeSize) / 2) - 1;
+  var spaceBoxCenter = new THREE.Vector3(actualDimensionMidPoint, actualDimensionMidPoint, actualDimensionMidPoint);
+  console.log(spaceBoxCenter);
+
   // Build an array of the positions in the spaceBox for our cubes.
   // Go along x axis, then y, then z.
   var cubePositions = [];
@@ -49,8 +54,6 @@ jQuery(function() {
       }
     }
   }
-
-  console.log(cubePositions);
 
   // Uniform cube size
   var boxGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
@@ -88,16 +91,19 @@ jQuery(function() {
     scene.add(box);
   }
 
-  camera.position.set(-30, 40, 20);
-  camera.lookAt(scene.position);
+  // Camera distance from origin
+  var cameraDimension = ((spaceBoxDimension * cubeSize) - 1) * 3;
+  camera.position.set(-cameraDimension, cameraDimension, cameraDimension);
+  camera.lookAt(spaceBoxCenter);
 
   // Add some ambient light
   // var ambientLight = new THREE.AmbientLight( 0x202020 );
   // scene.add(ambientLight);
 
   var spotLight = new THREE.SpotLight( 0xFFFFFF );
-  spotLight.position.set( -40, 40, -20 );
+  spotLight.position.set( -cameraDimension, cameraDimension, -cameraDimension );
   spotLight.castShadow = true;
+  spotLight.lookAt(spaceBoxCenter);
   scene.add( spotLight );
 
   theContainer.append(renderer.domElement);
