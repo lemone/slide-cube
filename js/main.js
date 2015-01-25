@@ -12,7 +12,7 @@ jQuery(function() {
 
 	// Number of box objects we want to have in our space cube
   // This should never excede 999. 800 is even a bit much. 
-  var numberOfBoxes = 128;
+  var numberOfBoxes = 65;
   // Length of one side of the cubes
   var cubeSize = 5;
   var boxes = [];
@@ -35,7 +35,6 @@ jQuery(function() {
   // Find the center point of the spaceCube
   var actualDimensionMidPoint = ((spaceBoxDimension * cubeSize) / 2) - 1;
   var spaceBoxCenter = new THREE.Vector3(actualDimensionMidPoint, actualDimensionMidPoint, actualDimensionMidPoint);
-  console.log(spaceBoxCenter);
 
   // Build an array of the positions in the spaceBox for our cubes.
   // Go along x axis, then y, then z.
@@ -71,14 +70,19 @@ jQuery(function() {
 		var box = new THREE.Mesh(boxGeometry, randomMaterial);
 
     // Put the boxes in random positions within the spaceCube
-    var availablePositions = _.where(cubePositions, { occupied: false });
-    var positionIndex = Math.floor(Math.random() * availablePositions.length);
-    var cubePosition = availablePositions[positionIndex];
-    availablePositions[positionIndex].occupied = true;
+    var availablePositions = _.filter(cubePositions, function(position) {
+      return position.occupied == false;
+    });
+    var randomIndex = Math.floor(Math.random() * availablePositions.length);
+    var cubePosition = availablePositions[randomIndex];
+    availablePositions[randomIndex].occupied = true;
 
+    box.positionIndex = cubePositions.indexOf(cubePosition);
     box.position.x = cubePosition.x;
     box.position.y = cubePosition.y;
     box.position.z = cubePosition.z;
+
+    //adjacentPositions(box.positionIndex, spaceBoxDimension);
 
 		box.castShadow = true;
 		box.receiveShadow = true;
@@ -92,36 +96,61 @@ jQuery(function() {
   }
 
   // Camera distance from origin
-  var cameraDimension = ((spaceBoxDimension * cubeSize) - 1) * 3;
-  camera.position.set(-cameraDimension, cameraDimension, cameraDimension);
-  camera.lookAt(spaceBoxCenter);
+  var cameraDimension = ((spaceBoxDimension * cubeSize) - 1) * 2;
+  // camera.position.set(-cameraDimension, cameraDimension, cameraDimension);
+  // camera.lookAt(spaceBoxCenter);
 
   // Add some ambient light
-  // var ambientLight = new THREE.AmbientLight( 0x202020 );
-  // scene.add(ambientLight);
+  var ambientLight = new THREE.AmbientLight( 0x202020 );
+  scene.add(ambientLight);
 
-  var spotLight = new THREE.SpotLight( 0xFFFFFF );
-  spotLight.position.set( -cameraDimension, cameraDimension, -cameraDimension );
-  spotLight.castShadow = true;
-  spotLight.lookAt(spaceBoxCenter);
-  scene.add( spotLight );
+  var spotLight1 = new THREE.SpotLight( 0xFFFFFF );
+  var spotLight2 = new THREE.SpotLight( 0xFFFFFF, 0.4 );
+  spotLight1.position.set( -cameraDimension, cameraDimension, -cameraDimension );
+  spotLight2.position.set( cameraDimension, cameraDimension, cameraDimension );
+  spotLight1.castShadow = true;
+  spotLight2.castShadow = true;
+  spotLight1.lookAt(spaceBoxCenter);
+  spotLight2.lookAt(spaceBoxCenter);
+  scene.add( spotLight1 );
+  scene.add( spotLight2 );
 
   theContainer.append(renderer.domElement);
+
+  // Toggle whether a box is currently moving
+  var boxMoving = false;
+  var boxToMove = {};
+  var step = 0;
 
   renderScene();
 
   function renderScene() {
     // Determines the speed of the movement. The lower the number the slower we go.
-    var step = 0.04;
+    step += 0.005;
 
-	  // boxes.forEach(function(box, index) {
-  	// 	box.position.x = (index % cubeSize) * cubeSize;
-  	// 	box.position.y = Math.floor(index / cubeSize) * cubeSize;
-  	// 	box.position.z = 0;
-	  // });
+    // Pick a random box
+    // if (boxMoving === false) {
+    //   boxToMove = boxes[Math.floor(Math.random() * boxes.length)];
+
+    //   // Make sure this box has an empty adjacent position to move to
+
+    //   boxMoving = true;
+    // }
+
+    // Orbit the camera
+    camera.position.x = spaceBoxCenter.x + (cameraDimension * Math.cos(step));
+    camera.position.y = spaceBoxCenter.y + (cameraDimension * Math.sin(step));
+    camera.position.z = spaceBoxCenter.z + (cameraDimension * Math.sin(step));
+    camera.lookAt(spaceBoxCenter);
 
 	  // render using requestAnimationFrame
-	  //requestAnimationFrame(renderScene);
+	  requestAnimationFrame(renderScene);
 	  renderer.render(scene, camera);
 	}
+
+  // Give a cube dimension and a position finds the adjacent positions
+  function adjacentPositions(positionIndex, spaceBoxDimension) {
+    console.log('positionIndex', positionIndex);
+    console.log('spaceBoxDimension', spaceBoxDimension);
+  }
 });
