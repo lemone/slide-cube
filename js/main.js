@@ -12,7 +12,7 @@ jQuery(function() {
 
 	// Number of box objects we want to have in our space cube
   // This should never excede 999. 800 is even a bit much. 
-  var numberOfBoxes = 65;
+  var numberOfBoxes = 730;
   // Length of one side of the cubes
   var cubeSize = 5;
   var boxes = [];
@@ -62,7 +62,7 @@ jQuery(function() {
 
   // Create an array of surface meshes of each color
   var boxMaterials = _.map(boxColors, function(color) {
-    return new THREE.MeshLambertMaterial({ color: color });
+    return new THREE.MeshPhongMaterial({ color: color });
   });
 
 	for (var i = 0; i < numberOfBoxes; i++) {
@@ -82,8 +82,6 @@ jQuery(function() {
     box.position.y = cubePosition.y;
     box.position.z = cubePosition.z;
 
-    //adjacentPositions(box.positionIndex, spaceBoxDimension);
-
 		box.castShadow = true;
 		box.receiveShadow = true;
 
@@ -100,42 +98,71 @@ jQuery(function() {
   // camera.position.set(-cameraDimension, cameraDimension, cameraDimension);
   // camera.lookAt(spaceBoxCenter);
 
-  // Add some ambient light
-  var ambientLight = new THREE.AmbientLight( 0x202020 );
-  scene.add(ambientLight);
-
   var spotLight1 = new THREE.SpotLight( 0xFFFFFF );
-  var spotLight2 = new THREE.SpotLight( 0xFFFFFF, 0.4 );
   spotLight1.position.set( -cameraDimension, cameraDimension, -cameraDimension );
-  spotLight2.position.set( cameraDimension, cameraDimension, cameraDimension );
   spotLight1.castShadow = true;
-  spotLight2.castShadow = true;
   spotLight1.lookAt(spaceBoxCenter);
-  spotLight2.lookAt(spaceBoxCenter);
   scene.add( spotLight1 );
-  scene.add( spotLight2 );
 
   theContainer.append(renderer.domElement);
 
   // Toggle whether a box is currently moving
   var boxMoving = false;
   var boxToMove = {};
+  // The current movement axis
+  var axis = '';
+  var destinationPosition,
+      destinationPositionIndex;
+
+  // The movement
+  var moveDiff = 0;
+
   var step = 0;
 
   renderScene();
 
   function renderScene() {
-    // Determines the speed of the movement. The lower the number the slower we go.
+    // Only used for the camera movement at the moment
     step += 0.005;
 
     // Pick a random box
-    // if (boxMoving === false) {
-    //   boxToMove = boxes[Math.floor(Math.random() * boxes.length)];
+    if (boxMoving === false) {
+      boxToMove = boxes[Math.floor(Math.random() * boxes.length)];
 
-    //   // Make sure this box has an empty adjacent position to move to
+      // Make sure this box has an empty adjacent position to move to
+      var availablePositions = adjacentOpenPositions(boxToMove.positionIndex, spaceBoxDimension);
+      if (availablePositions.length > 0) {
+        destinationPositionIndex = availablePositions[Math.floor(Math.random() * availablePositions.length)];
+        destinationPosition = cubePositions[destinationPositionIndex];
+        destinationPosition.occupied = true;
+        cubePositions[boxToMove.positionIndex].occupied = false;
 
-    //   boxMoving = true;
-    // }
+        // Determine which axis to move along
+        if (destinationPosition.x !== boxToMove.position.x) {
+          moveDiff = boxToMove.position.x - destinationPosition.x;
+          axis = 'x';
+        } else if (destinationPosition.y !== boxToMove.position.y) {
+          moveDiff = boxToMove.position.y - destinationPosition.y;
+          axis = 'y';
+        } else if (destinationPosition.z !== boxToMove.position.z) {
+          moveDiff = boxToMove.position.z - destinationPosition.z;
+          axis = 'z';
+        }
+
+        boxMoving = true;
+      }
+    }
+
+    if (boxMoving === true && axis !== '') {
+      if (boxToMove.position[axis] !== destinationPosition[axis]) {
+
+        boxToMove.position[axis] -= moveDiff * 0.1;
+
+      } else {
+        boxToMove.positionIndex = destinationPositionIndex;
+        boxMoving = false;
+      }
+    }
 
     // Orbit the camera
     camera.position.x = spaceBoxCenter.x + (cameraDimension * Math.cos(step));
@@ -149,8 +176,46 @@ jQuery(function() {
 	}
 
   // Give a cube dimension and a position finds the adjacent positions
-  function adjacentPositions(positionIndex, spaceBoxDimension) {
-    console.log('positionIndex', positionIndex);
-    console.log('spaceBoxDimension', spaceBoxDimension);
+  // TODO: refactor this junk with big boy maths
+  function adjacentOpenPositions(positionIndex, spaceBoxDimension) {
+    var adjacentOpenPositionIndexes = [];
+    var zLayerSize = Math.pow(spaceBoxDimension, 2);
+
+    // We can get our x axis neighbors from this mess
+    var xMod = positionIndex % spaceBoxDimension;
+    if (xMod !== 0) {
+      checkOccupancy(positionIndex - 1);
+    }
+    if (xMod !== spaceBoxDimension - 1) {
+      checkOccupancy(positionIndex + 1);
+    }
+
+    // The y axis neighbors
+    if (positionIndex - spaceBoxDimension > 0) {
+      // We have a y position below
+      checkOccupancy(positionIndex - spaceBoxDimension);
+    }
+    if (positionIndex + spaceBoxDimension < zLayerSize) {
+      // We have a y position above
+      checkOccupancy(positionIndex + spaceBoxDimension);
+    }
+
+    // The z axis neighbors
+    if (positionIndex - zLayerSize > 0) {
+      // We have a lower z neighbor
+      checkOccupancy(positionIndex - zLayerSize);
+    }
+    if (positionIndex + zLayerSize < Math.pow(spaceBoxDimension, 3)) {
+      // We have a higher z neighbor
+      checkOccupancy(positionIndex + zLayerSize);
+    }
+
+    function checkOccupancy(index) {
+      if (cubePositions[index].occupied === false) {
+        adjacentOpenPositionIndexes.push(index);
+      }
+    }
+
+    return adjacentOpenPositionIndexes;
   }
 });
