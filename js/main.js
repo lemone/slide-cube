@@ -1,18 +1,22 @@
-jQuery(function() {
+(function() {
+  "use strict";
 
-	var theContainer = $('#container');
+  var theContainer = $('#container');
 
-	var scene = new THREE.Scene();
-	var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-	var renderer = new THREE.WebGLRenderer();
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+  var renderer = new THREE.WebGLRenderer({
+                   alpha: true,
+                   antialias: true
+                 });
 
-  renderer.setClearColor(new THREE.Color(0x333333, 1.0));
+  renderer.setClearColor(0x383338, 0.8);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMapEnabled = true;
 
-	// Number of box objects we want to have in our space cube
+  // Number of box objects we want to have in our space cube
   // This should never excede 999. 800 is even a bit much. 
-  var numberOfBoxes = 730;
+  var numberOfBoxes = 36;
   // Length of one side of the cubes
   var cubeSize = 5;
   var boxes = [];
@@ -23,7 +27,7 @@ jQuery(function() {
   var spaceBoxDimension = 2;
 
   // Cap the size to 20
-  var spaceBoxDimensionMax = 10;
+  var spaceBoxDimensionMax = 5;
 
   // Determine our spaceBox dimension based on the numberOfBoxes
   for (; spaceBoxDimension <= spaceBoxDimensionMax; spaceBoxDimension++) {
@@ -58,16 +62,16 @@ jQuery(function() {
   var boxGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
 
   // The surface colors
-  var boxColors = [0x983265, 0x986598, 0x979735, 0x339798, 0x006699, 0xCCCC99];
+  var boxColors = [0x333333, 0x555555, 0x777777, 0x999999, 0xbbbbbb, 0xdddddd];
 
   // Create an array of surface meshes of each color
   var boxMaterials = _.map(boxColors, function(color) {
-    return new THREE.MeshPhongMaterial({ color: color });
+    return new THREE.MeshStandardMaterial({ color: color });
   });
 
-	for (var i = 0; i < numberOfBoxes; i++) {
-		var randomMaterial = boxMaterials[Math.floor(Math.random() * boxMaterials.length)];
-		var box = new THREE.Mesh(boxGeometry, randomMaterial);
+  for (var i = 0; i < numberOfBoxes; i++) {
+    var randomMaterial = boxMaterials[Math.floor(Math.random() * boxMaterials.length)];
+    var box = new THREE.Mesh(boxGeometry, randomMaterial);
 
     // Put the boxes in random positions within the spaceCube
     var availablePositions = _.filter(cubePositions, function(position) {
@@ -82,10 +86,10 @@ jQuery(function() {
     box.position.y = cubePosition.y;
     box.position.z = cubePosition.z;
 
-		box.castShadow = true;
-		box.receiveShadow = true;
+    box.castShadow = true;
+    box.receiveShadow = true;
 
-		box.step = 0;
+    box.step = 0;
 
     // Add sphere to the spheres array
     boxes.push(box);
@@ -97,6 +101,9 @@ jQuery(function() {
   var cameraDimension = ((spaceBoxDimension * cubeSize) - 1) * 2;
   // camera.position.set(-cameraDimension, cameraDimension, cameraDimension);
   // camera.lookAt(spaceBoxCenter);
+
+  var ambientLight = new THREE.AmbientLight( 0x405040 );
+  scene.add( ambientLight );
 
   var spotLight1 = new THREE.SpotLight( 0xFFFFFF );
   spotLight1.position.set( -cameraDimension, cameraDimension, -cameraDimension );
@@ -156,7 +163,7 @@ jQuery(function() {
     if (boxMoving === true && axis !== '') {
       if (boxToMove.position[axis] !== destinationPosition[axis]) {
 
-        boxToMove.position[axis] -= moveDiff * 0.1;
+        boxToMove.position[axis] -= moveDiff / 40.0;
 
       } else {
         boxToMove.positionIndex = destinationPositionIndex;
@@ -170,13 +177,12 @@ jQuery(function() {
     camera.position.z = spaceBoxCenter.z + (cameraDimension * Math.sin(step));
     camera.lookAt(spaceBoxCenter);
 
-	  // render using requestAnimationFrame
-	  requestAnimationFrame(renderScene);
-	  renderer.render(scene, camera);
-	}
+    // render using requestAnimationFrame
+    requestAnimationFrame(renderScene);
+    renderer.render(scene, camera);
+  }
 
   // Give a cube dimension and a position finds the adjacent positions
-  // TODO: refactor this junk with big boy maths
   function adjacentOpenPositions(positionIndex, spaceBoxDimension) {
     var adjacentOpenPositionIndexes = [];
     var zLayerSize = Math.pow(spaceBoxDimension, 2);
@@ -218,4 +224,4 @@ jQuery(function() {
 
     return adjacentOpenPositionIndexes;
   }
-});
+})();
