@@ -1,3 +1,3 @@
 # Slide Cube
 
-[Demo](http://lemone.github.io/slide-cube/)
+[Demo](http://zenjyn.github.io/slide-cube/)
