@@ -12,7 +12,7 @@
 
   renderer.setClearColor(0x383338, 0.8);
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.shadowMapEnabled = true;
+  renderer.shadowMap.enabled = true;
 
   // Number of box objects we want to have in our space cube
   // This should never excede 999. 800 is even a bit much. 
