@@ -1,7 +1,7 @@
 (function() {
   "use strict";
 
-  var theContainer = $('#container');
+  var theContainer = document.getElementById('container');
 
   var scene = new THREE.Scene();
   var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -10,31 +10,19 @@
                    antialias: true
                  });
 
-  renderer.setClearColor(0x383338, 0.8);
+  renderer.setClearColor(0xb6a754, 0.8);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled = true;
 
   // Number of box objects we want to have in our space cube
   // This should never excede 999. 800 is even a bit much. 
-  var numberOfBoxes = 36;
+  var numberOfBoxes = 7;
   // Length of one side of the cubes
   var cubeSize = 5;
   var boxes = [];
 
   // Space cube side length based on numberOfBoxes
-  // TODO: find the real math to get this number, so we don't have to do
-  // this brute force chump junk
-  var spaceBoxDimension = 2;
-
-  // Cap the size to 20
-  var spaceBoxDimensionMax = 5;
-
-  // Determine our spaceBox dimension based on the numberOfBoxes
-  for (; spaceBoxDimension <= spaceBoxDimensionMax; spaceBoxDimension++) {
-    if (Math.pow(spaceBoxDimension, 3) > numberOfBoxes) {
-      break;
-    }
-  }
+  var spaceBoxDimension = Math.ceil(Math.cbrt(numberOfBoxes));
 
   // Find the center point of the spaceCube
   var actualDimensionMidPoint = ((spaceBoxDimension * cubeSize) / 2) - 1;
@@ -62,7 +50,7 @@
   var boxGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
 
   // The surface colors
-  var boxColors = [0x333333, 0x555555, 0x777777, 0x999999, 0xbbbbbb, 0xdddddd];
+  var boxColors = [0x293e6a, 0x3b5998, 0x639bf1, 0x77ba9b];
 
   // Create an array of surface meshes of each color
   var boxMaterials = _.map(boxColors, function(color) {
@@ -111,7 +99,13 @@
   spotLight1.lookAt(spaceBoxCenter);
   scene.add( spotLight1 );
 
-  theContainer.append(renderer.domElement);
+  var spotLight2 = new THREE.SpotLight( 0xFFFFFF );
+  spotLight2.position.set( cameraDimension, -cameraDimension, cameraDimension );
+  spotLight2.castShadow = true;
+  spotLight2.lookAt(spaceBoxCenter);
+  scene.add( spotLight2 );
+
+  theContainer.appendChild(renderer.domElement);
 
   // Toggle whether a box is currently moving
   var boxMoving = false;
@@ -207,7 +201,7 @@
     }
 
     // The z axis neighbors
-    if (positionIndex - zLayerSize > 0) {
+    if (positionIndex - zLayerSize >= 0) {
       // We have a lower z neighbor
       checkOccupancy(positionIndex - zLayerSize);
     }
@@ -217,7 +211,7 @@
     }
 
     function checkOccupancy(index) {
-      if (cubePositions[index].occupied === false) {
+      if (!cubePositions[index].occupied) {
         adjacentOpenPositionIndexes.push(index);
       }
     }
