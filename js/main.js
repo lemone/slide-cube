@@ -16,7 +16,7 @@
 
   // Number of box objects we want to have in our space cube
   // This should never excede 999. 800 is even a bit much. 
-  var numberOfBoxes = 7;
+  var numberOfBoxes = 566;
   // Length of one side of the cubes
   var cubeSize = 5;
   var boxes = [];
@@ -54,7 +54,9 @@
 
   // Create an array of surface meshes of each color
   var boxMaterials = _.map(boxColors, function(color) {
-    return new THREE.MeshStandardMaterial({ color: color });
+    return new THREE.MeshBasicMaterial({
+      color: color
+    });
   });
 
   for (var i = 0; i < numberOfBoxes; i++) {
@@ -182,16 +184,15 @@
     var zLayerSize = Math.pow(spaceBoxDimension, 2);
 
     // We can get our x axis neighbors from this mess
-    var xMod = positionIndex % spaceBoxDimension;
-    if (xMod !== 0) {
+    if (positionIndex % spaceBoxDimension > 0) {
       checkOccupancy(positionIndex - 1);
     }
-    if (xMod !== spaceBoxDimension - 1) {
+    if ((positionIndex + 1) % spaceBoxDimension !== 0) {
       checkOccupancy(positionIndex + 1);
     }
 
     // The y axis neighbors
-    if (positionIndex - spaceBoxDimension > 0) {
+    if (positionIndex - spaceBoxDimension >= 0) {
       // We have a y position below
       checkOccupancy(positionIndex - spaceBoxDimension);
     }
